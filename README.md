@@ -13,14 +13,17 @@ Max_Depth = 1
 
 ```
 
+To Run
+```
+npm init
 
 ```
-npm init```
 
 THEN 
 
 ```
-node index.mjs```
+node index.mjs
+```
 
 saves 3 files for now. 
 
