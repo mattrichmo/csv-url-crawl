@@ -2,7 +2,8 @@ CSV-URL-CRAWL
 
 A node.js app to parse urls from a csv, then scrape each page - creating a new pobject for each page under each link, then recompiling that into a flattened csv data export for each link. 
 
-Primary purpose of this script for an upwork client. 
+Primary purpose of this code was built to a client's specifications in an Upwork Prjoect. 
+
 
 #Important Variables```
 fileName = `linklist.csv` // set this to your csv file name
@@ -20,3 +21,5 @@ THEN
 
 ```
 node index.mjs```
+
+© 2024 all rights reserved Matt Richmond 
