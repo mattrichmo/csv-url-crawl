@@ -22,4 +22,10 @@ THEN
 ```
 node index.mjs```
 
+saves 3 files for now. 
+
+allLinksData.csv: A concatentation of all page data scraped into 1 link object
+parentLinkData.csv: just the parents data
+chiildLinksData.csv: Just the child data
+
 © 2024 all rights reserved Matt Richmond 
