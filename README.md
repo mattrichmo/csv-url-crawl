@@ -5,14 +5,14 @@ A node.js app to parse urls from a csv, then scrape each page - creating a new p
 Primary purpose of this code was built to a client's specifications in an Upwork Prjoect. 
 
 
-#Important Variables```
+#Important Variables
+```
 fileName = `linklist.csv` // set this to your csv file name
 Max_Depth = 1
 // This should be set to how deep you want to scrape each. 1 being only the main page
 
 ```
 
-to run 
 
 ```
 npm init```
