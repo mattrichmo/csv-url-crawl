@@ -21,31 +21,36 @@ const loadCsvLinks = async (fileName) => {
             .on('data', (row) => {
                 console.log(chalk.green('Processing row:'), row); // Log each row for debugging
 
-                let originalUrl = row[0];
-                if (!originalUrl) {
-                    console.log(chalk.red('URL is undefined or empty in this row.'));
-                    return;
+                // Loop through all properties in the row object
+                for (let key in row) {
+                    let originalUrl = row[key];
+                    if (!originalUrl) {
+                        console.log(chalk.red('URL is undefined or empty in this column.'));
+                        continue;
+                    }
+
+                    let formattedUrl = originalUrl.trim();
+                    let neededParsing = false;
+
+                    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+                        formattedUrl = 'http://' + formattedUrl;
+                        neededParsing = true;
+                    }
+
+                    if (neededParsing) {
+                        console.log(chalk.yellow('Parsing needed for:'), originalUrl);
+                    } else {
+                        console.log(chalk.blue('Clean format (no parsing needed):'), originalUrl);
+                    }
+
+                    linksToScrape.push(formattedUrl);
                 }
-
-                let formattedUrl = originalUrl.trim();
-                let neededParsing = false;
-
-                if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-                    formattedUrl = 'http://' + formattedUrl;
-                    neededParsing = true;
-                }
-
-                if (neededParsing) {
-                    console.log(chalk.yellow('Parsing needed for:'), originalUrl);
-                } else {
-                    console.log(chalk.blue('Clean format (no parsing needed):'), originalUrl);
-                }
-
-                linksToScrape.push(formattedUrl);
             })
             .on('end', () => {
                 console.log(chalk.green('CSV file successfully processed'));
-                console.log(chalk.green('Links to scrape:'), linksToScrape);
+                for (let i = 0; i < linksToScrape.length; i++) {
+                    console.log(chalk.dim(`${i + 1}:`), linksToScrape[i]);
+                }
                 resolve();
             });
     });
@@ -53,7 +58,10 @@ const loadCsvLinks = async (fileName) => {
     return linksToScrape;
 };
 
+
 const scrapeLink = async (link, depth = 1, parentDomain = null, visitedLinks = new Set()) => {
+    // depth: The depth of the current link in the link tree
+    // 1 = main link, 2 = child link, 3 = grandchild link, etc.
     const MAX_DEPTH = 1; // Adjust this as needed
 
     if (visitedLinks.has(link) || depth > MAX_DEPTH) {
@@ -66,7 +74,7 @@ const scrapeLink = async (link, depth = 1, parentDomain = null, visitedLinks = n
         parentDomain = new URL(link).hostname;
     }
 
-    console.log(chalk.green(`Scraping link at depth ${depth}: ${link}`));
+    console.log(chalk.dim(`Scraping link:`),chalk.green(`${link}`, chalk.dim(`depth ${depth}:`)));
 
     let linkObject = {
         id: uuidv4(),
@@ -100,7 +108,6 @@ const scrapeLink = async (link, depth = 1, parentDomain = null, visitedLinks = n
             }
         });
 
-        console.log(chalk.green(`Scraped main page: ${link}`));
 
         if (depth < MAX_DEPTH) {
             const childLinks = $('a').map((i, el) => $(el).attr('href')).get();
@@ -126,19 +133,17 @@ const scrapeLink = async (link, depth = 1, parentDomain = null, visitedLinks = n
     return linkObject;
 };
 
-
-
 const scrapeAllLinks = async (linksToScrape) => {
     let scrapedData = [];
     for (let link of linksToScrape) {
-        console.log(chalk.green(`Starting scrape for link: ${link}`));
         let linkObject = await scrapeLink(link);
         scrapedData.push(linkObject);
-        console.log(chalk.green(`Finished scraping link: ${link}`));
     }
     console.log(chalk.green('All links have been scraped.'));
     return scrapedData;
 };
+
+const removeDuplicates = array => [...new Set(array)];
 
 const generateCsvData = (scrapedData) => {
     const parentLinkData = [];
@@ -147,13 +152,18 @@ const generateCsvData = (scrapedData) => {
 
     scrapedData.forEach(data => {
         data.linkPages.forEach(page => {
+            // Fallback to empty arrays or strings if properties are undefined
+            const uniqueH1Text = page.h1Text ? removeDuplicates(page.h1Text) : [];
+            const uniqueH2Text = page.h2Text ? removeDuplicates(page.h2Text) : [];
+            const uniqueKeywords = page.meta && page.meta.keywords ? removeDuplicates(page.meta.keywords) : [];
+
             const rowData = {
                 url: page.url,
-                title: page.meta.title,
-                description: page.meta.description,
-                keywords: page.meta.keywords ? page.meta.keywords.join(', ') : '',
-                h1Text: page.h1Text.join(', '),
-                h2Text: page.h2Text.join(', ')
+                title: page.meta && page.meta.title ? page.meta.title : '',
+                description: page.meta && page.meta.description ? page.meta.description : '',
+                keywords: uniqueKeywords.join(', '),
+                h1Text: uniqueH1Text.join(', '),
+                h2Text: uniqueH2Text.join(', ')
             };
 
             if (!page.isChildPage) {
@@ -169,6 +179,7 @@ const generateCsvData = (scrapedData) => {
     return { parentLinkData, childLinkData, allLinkData };
 };
 
+
 const saveToCsv = (data, filename) => {
     const csvContent = [
         'URL,Page Titles,Meta Descriptions,Meta Keywords,H1 Titles,H2 Titles'
@@ -176,7 +187,11 @@ const saveToCsv = (data, filename) => {
         `${row.url},${row.title},${row.description},${row.keywords},${row.h1Text},${row.h2Text}`
     ));
 
+
+
     fs.writeFileSync(filename, csvContent.join('\n'));
+    console.log(`Saved File: ${filename}`);
+
 };
 export const main = async () => {
     console.log(chalk.green('Starting scraping process'));
