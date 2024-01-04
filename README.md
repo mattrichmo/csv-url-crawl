@@ -7,9 +7,9 @@ Primary purpose of this code was built to a client's specifications in an Upwork
 
 #Important Variables
 ```
-fileName = `linklist.csv` // set this to your csv file name
-Max_Depth = 1
-// This should be set to how deep you want to scrape each. 1 being only the main page
+fileName = `links.csv` // set this to your csv file name
+
+Max_Depth = 1  // This should be set to how deep you want to scrape each. 1 being only the main page
 
 ```
 
